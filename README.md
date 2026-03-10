@@ -125,6 +125,20 @@ To move the CRM closer to production readiness the following improvements were a
 * Type-safe Supabase queries
 
 ---
+## Demo
+
+This CRM demonstrates the following workflow:
+
+Lead Created  
+→ Lead Assigned  
+→ Visit Scheduled  
+→ Visit Confirmed  
+→ Visit Outcome Recorded  
+→ Lead Converted to Booking
+
+This project is a production-oriented CRM MVP designed for managing PG accommodation leads and visit scheduling for Gharpayy.
+
+The system demonstrates how leads can be captured, assigned to agents, tracked through a sales pipeline, and converted into bookings.
 
 
 
