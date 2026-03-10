@@ -1,6 +1,8 @@
 # Gharpayy CRM – Lead Management System
 
-A production-oriented CRM MVP built for Gharpayy to capture leads, manage visit scheduling, and convert leads into bookings for PG accommodations.
+This project is a production-oriented CRM MVP designed for managing PG accommodation leads and visit scheduling for Gharpayy.
+
+The system demonstrates how leads can be captured, assigned to agents, tracked through a sales pipeline, and converted into bookings.
 
 ## 🚀 Features
 
@@ -135,10 +137,6 @@ Lead Created
 → Visit Confirmed  
 → Visit Outcome Recorded  
 → Lead Converted to Booking
-
-This project is a production-oriented CRM MVP designed for managing PG accommodation leads and visit scheduling for Gharpayy.
-
-The system demonstrates how leads can be captured, assigned to agents, tracked through a sales pipeline, and converted into bookings.
 
 
 
