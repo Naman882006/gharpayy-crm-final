@@ -136,6 +136,53 @@ export const useCreateVisit = () => {
   });
 };
 
+// Generic update hook for visits. Used by multiple components and workflows.
+export const useUpdateVisit = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string } & Database['public']['Tables']['visits']['Update']) => {
+      const { data, error } = await supabase
+        .from('visits')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['visits'] }),
+  });
+};
+
+// standalone helper used by the hook and tests
+export async function recordVisitOutcome(
+  visitId: string,
+  outcome: Database['public']['Enums']['visit_outcome']
+) {
+  // call the atomic RPC that handles the entire workflow
+  const { error } = await supabase.rpc('perform_visit_outcome', {
+    p_visit_id: visitId,
+    p_outcome: outcome,
+  });
+  if (error) throw error;
+  // rpc does not return data; we simply propagate success
+  return { visitId, outcome };
+}
+
+// Combined mutation that handles recording a visit outcome, updating the lead and optionally creating a booking.
+export const useRecordVisitOutcome = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ visitId, outcome }: { visitId: string; outcome: Database['public']['Enums']['visit_outcome'] }) =>
+      recordVisitOutcome(visitId, outcome),
+    onSuccess: (_data) => {
+      qc.invalidateQueries({ queryKey: ['visits'] });
+      qc.invalidateQueries({ queryKey: ['leads'] });
+      qc.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+};
+
 // Dashboard stats
 export const useDashboardStats = () =>
   useQuery({

@@ -1,16 +1,18 @@
 import AppLayout from '@/components/AppLayout';
 import AddVisitDialog from '@/components/AddVisitDialog';
-import { useVisits } from '@/hooks/useCrmData';
+import { useVisits, useUpdateVisit, useRecordVisitOutcome } from '@/hooks/useCrmData';
 import { format } from 'date-fns';
 import { CalendarCheck, CheckCircle, XCircle, HelpCircle, Clock, MapPin, User } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
-const outcomeIcons: Record<string, JSX.Element> = {
+import { VisitOutcome } from '@/types/crm';
+
+const outcomeIcons: Record<VisitOutcome, JSX.Element> = {
   booked: <CheckCircle size={14} className="text-success" />,
   considering: <HelpCircle size={14} className="text-warning" />,
   not_interested: <XCircle size={14} className="text-destructive" />,
@@ -20,21 +22,55 @@ const Visits = () => {
   const { data: visits, isLoading } = useVisits();
   const qc = useQueryClient();
 
+  // keep track of which visit is currently being mutated so we can disable controls
+  const [pendingOutcome, setPendingOutcome] = useState<Set<string>>(new Set());
+  const [confirmingIds, setConfirmingIds] = useState<Set<string>>(new Set());
+
   const upcoming = visits?.filter(v => !v.outcome) || [];
   const past = visits?.filter(v => v.outcome) || [];
 
-  const handleOutcome = async (visitId: string, outcome: string) => {
-    const { error } = await supabase.from('visits').update({ outcome: outcome as any }).eq('id', visitId);
-    if (error) { toast.error(error.message); return; }
-    toast.success('Outcome recorded');
-    qc.invalidateQueries({ queryKey: ['visits'] });
+const recordOutcome = useRecordVisitOutcome();
+
+  const handleOutcome = async (visitId: string, outcome: VisitOutcome) => {
+    setPendingOutcome(prev => new Set(prev).add(visitId));
+    try {
+      await recordOutcome.mutateAsync({ visitId, outcome });
+      toast.success('Outcome recorded');
+    } catch (e: any) {
+      console.error('record outcome error', e);
+      toast.error(e?.message || 'Failed to record outcome');
+    } finally {
+      setPendingOutcome(prev => {
+        const copy = new Set(prev);
+        copy.delete(visitId);
+        return copy;
+      });
+    }
   };
 
-  const handleConfirm = async (visitId: string) => {
-    const { error } = await supabase.from('visits').update({ confirmed: true }).eq('id', visitId);
-    if (error) { toast.error(error.message); return; }
-    toast.success('Visit confirmed');
-    qc.invalidateQueries({ queryKey: ['visits'] });
+  const updateVisit = useUpdateVisit();
+
+  const handleConfirm = (visitId: string) => {
+    setConfirmingIds(prev => new Set(prev).add(visitId));
+    updateVisit.mutate(
+      { id: visitId, confirmed: true },
+      {
+        onSuccess: () => {
+          toast.success('Visit confirmed');
+        },
+        onError: (e: any) => {
+          console.error('confirm visit failed', e);
+          toast.error(e?.message || 'Unable to confirm visit');
+        },
+        onSettled: () => {
+          setConfirmingIds(prev => {
+            const copy = new Set(prev);
+            copy.delete(visitId);
+            return copy;
+          });
+        },
+      }
+    );
   };
 
   if (isLoading) {
@@ -70,8 +106,12 @@ const Visits = () => {
                 {visit.confirmed ? (
                   <span className="badge-pipeline bg-success/10 text-success text-[10px]">Confirmed</span>
                 ) : (
-                  <button onClick={() => handleConfirm(visit.id)} className="badge-pipeline bg-warning/10 text-warning text-[10px] hover:bg-warning/20 transition-colors cursor-pointer">
-                    Confirm
+                  <button
+                    onClick={() => handleConfirm(visit.id)}
+                    disabled={confirmingIds.has(visit.id)}
+                    className={`badge-pipeline bg-warning/10 text-warning text-[10px] transition-colors ${confirmingIds.has(visit.id) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-warning/20 cursor-pointer'}`}
+                  >
+                    {confirmingIds.has(visit.id) ? 'Confirming...' : 'Confirm'}
                   </button>
                 )}
               </div>
@@ -80,8 +120,13 @@ const Visits = () => {
                 <span className="flex items-center gap-1"><User size={10} /> {visit.agents?.name?.split(' ')[0] || 'TBD'}</span>
               </div>
               <div className="border-t border-border pt-3">
-                <Select onValueChange={v => handleOutcome(visit.id, v)}>
-                  <SelectTrigger className="h-8 text-2xs rounded-xl"><SelectValue placeholder="Record outcome..." /></SelectTrigger>
+                <Select
+                  onValueChange={v => handleOutcome(visit.id, v as VisitOutcome)}
+                  disabled={!!visit.outcome || pendingOutcome.has(visit.id)}
+                >
+                  <SelectTrigger className="h-8 text-2xs rounded-xl">
+                    <SelectValue placeholder={pendingOutcome.has(visit.id) ? 'Saving...' : 'Record outcome...'} />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="booked">✓ Booked</SelectItem>
                     <SelectItem value="considering">◉ Considering</SelectItem>

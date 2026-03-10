@@ -28,9 +28,17 @@ const AddLeadDialog = () => {
 
   const checkDuplicate = async (phone: string) => {
     if (!phone || phone.length < 5) { setDuplicate(null); return; }
-    const { data } = await supabase.from('leads').select('id, name, phone, status').eq('phone', phone).limit(1);
-    if (data && data.length > 0) setDuplicate(data[0]);
-    else setDuplicate(null);
+    try {
+      const { data, error } = await supabase.from('leads').select('id, name, phone, status').eq('phone', phone).limit(1);
+      if (error) {
+        console.error('duplicate lookup failed', error);
+        return;
+      }
+      if (data && data.length > 0) setDuplicate(data[0]);
+      else setDuplicate(null);
+    } catch (err) {
+      console.error('unexpected error checking duplicate lead', err);
+    }
   };
 
   const handleParse = useCallback((text: string) => {
