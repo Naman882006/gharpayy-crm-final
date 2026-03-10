@@ -1,61 +1,141 @@
-# Gharpayy Dashboard
+# Gharpayy CRM – Lead Management System
 
-## Overview
-Gharpayy Dashboard is a comprehensive administration and management system built for Gharpayy. It provides a centralized web-based application to handle various operational aspects, including leads, inventory, properties, bookings, and user analytics.
+A production-oriented CRM MVP built for Gharpayy to capture leads, manage visit scheduling, and convert leads into bookings for PG accommodations.
 
-## Features
-- **Authentication & Authorization**: Secure login, signup, and password reset functionalities.
-- **Analytics & Reporting**: Data-driven insights and historical logs for business performance metrics.
-- **CRM Pipeline**: Track and capture leads, manage conversations, and handle visits.
-- **Inventory & Property Management**: Detailed property tracking, matching, and zone management.
-- **Owner Portals**: Dedicated interfaces for tracking availability, handling owners, and managing bookings.
+## 🚀 Features
 
-## Technology Stack
-- **Frontend**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS, shadcn-ui, Radix UI
-- **State Management**: TanStack React Query
-- **Backend & Database**: Supabase
-- **Routing**: React Router
+* Automated Lead Capture
+* Round Robin Lead Assignment
+* Lead Pipeline Management
+* Visit Scheduling
+* Visit Outcome Tracking
+* Booking Conversion Workflow
+* Dashboard Analytics
+* Activity Timeline
+* Follow-up Reminder System
 
-## Local Setup Instructions
+---
 
-Follow these steps to run the dashboard application on your local machine.
+## 🏗 System Architecture
 
-### Prerequisites
-- Node.js
-- npm (Node Package Manager)
-- Git
+Frontend:
 
-### 1. Clone the Repository
-Open your terminal and clone the repository:
-```sh
-git clone <YOUR_GIT_URL>
+* React
+* TypeScript
+* Vite
+* TailwindCSS
+* shadcn/ui
+* TanStack Query
+
+Backend:
+
+* Supabase
+* PostgreSQL
+* Row Level Security
+* RPC functions
+
+---
+
+## 📊 CRM Workflow
+
+Lead Created
+↓
+Lead Assigned to Agent
+↓
+Visit Scheduled
+↓
+Visit Confirmed
+↓
+Visit Outcome Recorded
+↓
+Lead Converted to Booking
+
+---
+
+## 🗄 Database Design
+
+Main tables used:
+
+```
+leads
+visits
+agents
+properties
+bookings
+lead_activity
+follow_up_reminders
 ```
 
-### 2. Navigate to the Project Directory
-```sh
-cd gharpayy-flow
+Relationships:
+
+* One Lead → Many Visits
+* One Visit → One Property
+* One Visit → One Booking
+
+---
+
+## ⚙ Setup Instructions
+
+Clone repo:
+
+```
+git clone https://github.com/Naman882006/gharpayy-crm-final
 ```
 
-### 3. Install Dependencies
-Install all required packages:
-```sh
+Install dependencies:
+
+```
 npm install
 ```
 
-### 4. Configure Environment Variables
-Create a `.env` file in the root directory of the project and add your Supabase credentials:
-```env
-VITE_SUPABASE_PROJECT_ID="your_project_id_here"
-VITE_SUPABASE_PUBLISHABLE_KEY="your_publishable_key_here"
-VITE_SUPABASE_URL="https://your_project_id_here.supabase.co"
-```
+Run development server:
 
-### 5. Start the Development Server
-Run the application in development mode:
-```sh
+```
 npm run dev
 ```
 
-The application will launch and you can view it in your browser, typically at `http://localhost:8080` (or another port specified in the terminal output).
+---
 
+## 🔒 Production Notes
+
+While testing the CRM, lead creation may fail due to Supabase Row Level Security policies.
+
+In production environments authenticated agents should be allowed to insert leads.
+
+Example policy:
+
+```
+create policy "agents_can_insert_leads"
+on leads
+for insert
+to authenticated
+with check (true);
+```
+
+---
+
+## 🧠 Improvements Implemented
+
+To move the CRM closer to production readiness the following improvements were added:
+
+* Transactional visit outcome workflow
+* Lead activity timeline
+* Follow-up reminder system
+* Improved error handling
+* Type-safe Supabase queries
+
+---
+
+## 📸 Screenshots
+
+Dashboard
+Visits Pipeline
+Booking Conversion Workflow
+
+(see screenshots folder)
+
+---
+
+## 👨‍💻 Author
+
+Naman Sharma
