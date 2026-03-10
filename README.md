@@ -126,15 +126,7 @@ To move the CRM closer to production readiness the following improvements were a
 
 ---
 
-## 📸 Screenshots
 
-Dashboard
-Visits Pipeline
-Booking Conversion Workflow
-
-(see screenshots folder)
-
----
 
 ## 👨‍💻 Author
 
